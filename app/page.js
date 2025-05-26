@@ -2,16 +2,16 @@ import { Box } from "@mui/material"
 import Navbar from "@/components/navbar"
 import HeroBanner from "@/components/hero-banner"
 import FeaturedProducts from "@/components/featured-products"
-import AboutSection from "@/components/about-section"
+import ProductShowcase from "@/components/product-showcase"
 import BenefitsSection from "@/components/benefits-section"
 import TestimonialsSection from "@/components/testimonials-section"
 import NewsletterSection from "@/components/newsletter-section"
 import Footer from "@/components/footer"
 
 export const metadata = {
-  title: "Organic Biscuits - Handcrafted with Love",
+  title: "Organic Biscuits - Handcrafted Artisan Delights",
   description:
-    "Delicious organic biscuits made with natural ingredients. Experience the perfect blend of taste and health.",
+    "Premium organic biscuits handcrafted with love. Experience the perfect harmony of taste, tradition, and wellness in every bite.",
 }
 
 export default function Home() {
@@ -20,8 +20,8 @@ export default function Home() {
       <Navbar />
       <HeroBanner />
       <FeaturedProducts />
+      <ProductShowcase />
       <BenefitsSection />
-      <AboutSection />
       <TestimonialsSection />
       <NewsletterSection />
       <Footer />
