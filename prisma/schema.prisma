@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  phone     String?
+  isAdmin   Boolean   @default(false)
+  orders    Order[]
+  addresses Address[]
+  reviews   Review[]
+  cart      Cart?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id             String      @id @default(uuid())
+  name           String
+  slug           String      @unique
+  description    String
+  price          Float
+  originalPrice  Float?
+  image          String
+  images         String[]
+  stock          Int
+  category       String
+  categories     String[]
+  isFeatured     Boolean     @default(false)
+  ingredients    String?
+  nutritionalInfo Json?
+  allergens      String[]
+  benefits       String[]
+  weight         String?
+  dimensions     String?
+  reviews        Review[]
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+  rating         Float       @default(0)
+  reviewCount    Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String     @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  items         OrderItem[]
+  totalAmount   Float
+  status        String      @default("pending")
+  paymentStatus String      @default("unpaid")
+  shipping      Address     @relation(fields: [shippingId], references: [id])
+  shippingId    String
+  payment       Payment?
+  placedAt      DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float
+  name      String
+  image     String
+}
+
+model Payment {
+  id                   String   @id @default(uuid())
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId              String   @unique
+  userId               String
+  method               String
+  amount               Float
+  status               String
+  transactionId        String?
+  stripePaymentIntentId String?
+  paidAt               DateTime?
+  createdAt            DateTime @default(now())
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  phone     String
+  address   String
+  pincode   String
+  city      String
+  state     String
+  country   String
+  landmark  String?
+  isDefault Boolean  @default(false)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  rating     Int
+  comment    String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

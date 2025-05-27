@@ -6,7 +6,7 @@ import { IconSearch, IconFilter, IconSortDescending } from "@tabler/icons-react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import Navbar from "@/components/navbar"
-import ProductCard from "@/components/product-card"
+import ProductCardEnhanced from "@/components/product-card-enhanced"
 import Footer from "@/components/footer"
 
 if (typeof window !== "undefined") {
@@ -26,6 +26,7 @@ const allProducts = [
     stock: 25,
     categories: ["chocolate", "bestseller"],
     featured: true,
+    color: "#8B4513",
   },
   {
     id: "2",
@@ -38,6 +39,7 @@ const allProducts = [
     stock: 18,
     categories: ["vanilla", "classic"],
     featured: true,
+    color: "#F5DEB3",
   },
   {
     id: "3",
@@ -50,6 +52,7 @@ const allProducts = [
     stock: 12,
     categories: ["fruit", "healthy"],
     featured: false,
+    color: "#DEB887",
   },
   {
     id: "4",
@@ -62,6 +65,7 @@ const allProducts = [
     stock: 8,
     categories: ["nuts", "gluten-free"],
     featured: true,
+    color: "#DEB887",
   },
   {
     id: "5",
@@ -74,6 +78,7 @@ const allProducts = [
     stock: 15,
     categories: ["fruit", "citrus"],
     featured: false,
+    color: "#F5DEB3",
   },
   {
     id: "6",
@@ -86,6 +91,7 @@ const allProducts = [
     stock: 20,
     categories: ["gluten-free", "vegan"],
     featured: true,
+    color: "#8B4513",
   },
 ]
 
@@ -106,7 +112,6 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("featured")
   const [currentPage, setCurrentPage] = useState(1)
-  const [loading, setLoading] = useState(false)
   const productsPerPage = 6
 
   const sectionRef = useRef(null)
@@ -398,7 +403,7 @@ export default function ProductsPage() {
             {currentProducts.map((product, index) => (
               <Grid item xs={12} sm={6} lg={4} key={product.id}>
                 <Box ref={(el) => (cardsRef.current[index] = el)}>
-                  <ProductCard product={product} />
+                  <ProductCardEnhanced product={product} />
                 </Box>
               </Grid>
             ))}

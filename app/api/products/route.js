@@ -1,84 +1,8 @@
 import { NextResponse } from "next/server"
-
-// Mock data for products
-const products = [
-  {
-    id: "1",
-    name: "Chocolate Chip Biscuits",
-    description: "Delicious organic chocolate chip biscuits made with the finest ingredients.",
-    price: 4.99,
-    stock: 25,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["chocolate", "bestseller"],
-    featured: true,
-    rating: 4.8,
-    reviewCount: 124,
-  },
-  {
-    id: "2",
-    name: "Vanilla Shortbread",
-    description: "Classic organic vanilla shortbread that melts in your mouth.",
-    price: 3.99,
-    stock: 18,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["vanilla"],
-    featured: true,
-    rating: 4.5,
-    reviewCount: 86,
-  },
-  {
-    id: "3",
-    name: "Oatmeal Raisin Cookies",
-    description: "Hearty oatmeal cookies with organic raisins and a hint of cinnamon.",
-    price: 4.49,
-    stock: 12,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["fruit", "nuts"],
-    featured: false,
-    rating: 4.3,
-    reviewCount: 52,
-  },
-  {
-    id: "4",
-    name: "Almond Butter Cookies",
-    description: "Rich almond butter cookies made with organic almonds.",
-    price: 5.99,
-    stock: 8,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["nuts", "gluten-free"],
-    featured: true,
-    rating: 4.7,
-    reviewCount: 43,
-  },
-  {
-    id: "5",
-    name: "Lemon Zest Biscuits",
-    description: "Refreshing lemon zest biscuits made with organic lemons.",
-    price: 4.29,
-    stock: 15,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["fruit"],
-    featured: false,
-    rating: 4.4,
-    reviewCount: 38,
-  },
-  {
-    id: "6",
-    name: "Coconut Macaroons",
-    description: "Chewy coconut macaroons made with organic coconut flakes.",
-    price: 6.99,
-    stock: 20,
-    image: "/placeholder.svg?height=300&width=300",
-    categories: ["gluten-free", "vegan"],
-    featured: true,
-    rating: 4.9,
-    reviewCount: 67,
-  },
-]
+import { prisma } from "@/lib/prisma"
 
 export async function GET(request) {
   try {
-    // Get URL parameters
     const { searchParams } = new URL(request.url)
     const featured = searchParams.get("featured")
     const category = searchParams.get("category")
@@ -87,61 +11,184 @@ export async function GET(request) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const minPrice = Number.parseFloat(searchParams.get("minPrice") || "0")
     const maxPrice = Number.parseFloat(searchParams.get("maxPrice") || "1000")
+    const search = searchParams.get("search")
 
-    // Filter products
-    let filteredProducts = [...products]
-
-    if (featured === "true") {
-      filteredProducts = filteredProducts.filter((product) => product.featured)
+    // Build where clause
+    const where = {
+      AND: [
+        { price: { gte: minPrice, lte: maxPrice } },
+        featured === "true" ? { isFeatured: true } : {},
+        category ? { categories: { has: category } } : {},
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+                { category: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {},
+      ].filter((condition) => Object.keys(condition).length > 0),
     }
 
-    if (category) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.categories && product.categories.includes(category),
-      )
+    // Build orderBy clause
+    let orderBy = {}
+    switch (sort) {
+      case "price-low":
+        orderBy = { price: "asc" }
+        break
+      case "price-high":
+        orderBy = { price: "desc" }
+        break
+      case "rating":
+        orderBy = { rating: "desc" }
+        break
+      case "name":
+        orderBy = { name: "asc" }
+        break
+      case "newest":
+        orderBy = { createdAt: "desc" }
+        break
+      default:
+        orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }]
     }
 
-    // Filter by price range
-    filteredProducts = filteredProducts.filter((product) => product.price >= minPrice && product.price <= maxPrice)
+    // Get products with pagination
+    const [products, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+          _count: {
+            select: {
+              reviews: true,
+            },
+          },
+        },
+      }),
+      prisma.product.count({ where }),
+    ])
 
-    // Sort products
-    if (sort) {
-      switch (sort) {
-        case "price-low":
-          filteredProducts.sort((a, b) => a.price - b.price)
-          break
-        case "price-high":
-          filteredProducts.sort((a, b) => b.price - a.price)
-          break
-        case "popular":
-          filteredProducts.sort((a, b) => b.rating - a.rating)
-          break
-        case "newest":
-        default:
-          // Already sorted by newest (assuming id is sequential)
-          break
+    // Calculate average ratings and format response
+    const productsWithRatings = products.map((product) => {
+      const avgRating =
+        product.reviews.length > 0
+          ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
+          : product.rating || 0
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        image: product.image,
+        images: product.images,
+        stock: product.stock,
+        category: product.category,
+        categories: product.categories,
+        isFeatured: product.isFeatured,
+        rating: Math.round(avgRating * 10) / 10,
+        reviewCount: product._count.reviews,
+        createdAt: product.createdAt,
       }
-    }
-
-    // Paginate
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+    })
 
     // If featured=true, return just the products array for simplicity
     if (featured === "true") {
-      return NextResponse.json(paginatedProducts)
+      return NextResponse.json(productsWithRatings)
     }
 
-    // Return paginated products with total pages
+    // Return paginated products with metadata
     return NextResponse.json({
-      products: paginatedProducts,
-      totalPages: Math.ceil(filteredProducts.length / limit),
-      currentPage: page,
-      totalProducts: filteredProducts.length,
+      products: productsWithRatings,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+        totalProducts: totalCount,
+        hasNextPage: page < Math.ceil(totalCount / limit),
+        hasPrevPage: page > 1,
+      },
     })
   } catch (error) {
     console.error("Error in products API:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to fetch products",
+        message: error.message,
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST(request) {
+  try {
+    const data = await request.json()
+
+    // Validate required fields
+    const requiredFields = ["name", "description", "price", "image", "stock", "category"]
+    const missingFields = requiredFields.filter((field) => !data[field])
+
+    if (missingFields.length > 0) {
+      return NextResponse.json({ error: `Missing required fields: ${missingFields.join(", ")}` }, { status: 400 })
+    }
+
+    // Generate slug from name
+    const slug = data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    // Check if slug already exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { slug },
+    })
+
+    if (existingProduct) {
+      return NextResponse.json({ error: "A product with this name already exists" }, { status: 400 })
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        name: data.name,
+        slug,
+        description: data.description,
+        price: Number.parseFloat(data.price),
+        originalPrice: data.originalPrice ? Number.parseFloat(data.originalPrice) : null,
+        image: data.image,
+        images: data.images || [data.image],
+        stock: Number.parseInt(data.stock),
+        category: data.category,
+        categories: data.categories || [data.category],
+        isFeatured: data.isFeatured || false,
+        ingredients: data.ingredients || null,
+        nutritionalInfo: data.nutritionalInfo || null,
+        allergens: data.allergens || [],
+        benefits: data.benefits || [],
+        weight: data.weight || null,
+        dimensions: data.dimensions || null,
+      },
+    })
+
+    return NextResponse.json(product, { status: 201 })
+  } catch (error) {
+    console.error("Error creating product:", error)
+    return NextResponse.json(
+      {
+        error: "Failed to create product",
+        message: error.message,
+      },
+      { status: 500 },
+    )
   }
 }
