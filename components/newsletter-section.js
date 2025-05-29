@@ -5,12 +5,16 @@ import { Box, Container, Typography, TextField, Button, Stack } from "@mui/mater
 import { IconMail, IconGift } from "@tabler/icons-react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useTranslation } from "react-i18next"
+import { useTheme } from "@/contexts/theme-context"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
 export default function NewsletterSection() {
+  const { t } = useTranslation()
+  const { mode } = useTheme()
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
   const sectionRef = useRef(null)
@@ -59,30 +63,6 @@ export default function NewsletterSection() {
         overflow: "hidden",
       }}
     >
-      {/* Background decoration */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: -50,
-          right: -50,
-          width: 200,
-          height: 200,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.1)",
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: -100,
-          left: -100,
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.05)",
-        }}
-      />
-
       <Container maxWidth="md" sx={{ position: "relative", zIndex: 2 }}>
         <Box ref={contentRef} sx={{ textAlign: "center" }}>
           <Box sx={{ mb: 3 }}>
@@ -97,7 +77,7 @@ export default function NewsletterSection() {
               fontSize: { xs: "2rem", md: "3rem" },
             }}
           >
-            Get 15% Off Your First Order
+            {t("newsletter")}
           </Typography>
 
           <Typography
@@ -108,8 +88,7 @@ export default function NewsletterSection() {
               lineHeight: 1.6,
             }}
           >
-            Subscribe to our newsletter and be the first to know about new flavors, special offers, and healthy living
-            tips.
+            {t("newsletterDesc")}
           </Typography>
 
           {subscribed ? (
@@ -122,9 +101,9 @@ export default function NewsletterSection() {
               }}
             >
               <Typography variant="h6" sx={{ mb: 1 }}>
-                🎉 Welcome to the family!
+                {t("welcomeFamily")}
               </Typography>
-              <Typography>Check your email for your 15% discount code.</Typography>
+              <Typography>{t("checkEmail")}</Typography>
             </Box>
           ) : (
             <Box
@@ -141,7 +120,7 @@ export default function NewsletterSection() {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
                 <TextField
                   fullWidth
-                  placeholder="Enter your email address"
+                  placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
@@ -173,7 +152,7 @@ export default function NewsletterSection() {
                     },
                   }}
                 >
-                  Subscribe
+                  {t("subscribe")}
                 </Button>
               </Stack>
             </Box>
@@ -186,7 +165,7 @@ export default function NewsletterSection() {
               opacity: 0.7,
             }}
           >
-            No spam, unsubscribe at any time. We respect your privacy.
+            {t("noSpam")}
           </Typography>
         </Box>
       </Container>

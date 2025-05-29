@@ -1,3 +1,5 @@
+"use client"
+
 import { Box, Container, Grid, Typography, Link, IconButton, Divider } from "@mui/material"
 import {
   Facebook as FacebookIcon,
@@ -7,8 +9,13 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
 } from "@mui/icons-material"
+import { useTranslation } from "react-i18next"
+import { useTheme } from "@/contexts/theme-context"
 
 export default function Footer() {
+  const { t } = useTranslation()
+  const { mode } = useTheme()
+
   return (
     <Box
       component="footer"
@@ -23,10 +30,10 @@ export default function Footer() {
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" gutterBottom>
-              Organic Biscuits
+              {t("organicBiscuits")}
             </Typography>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              Handcrafted organic biscuits made with love and the finest ingredients.
+              {t("handcraftedOrganic")}
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
               <IconButton color="inherit" aria-label="Facebook">
@@ -43,25 +50,25 @@ export default function Footer() {
 
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" gutterBottom>
-              Quick Links
+              {t("quickLinks")}
             </Typography>
             <Link href="/" color="inherit" display="block" sx={{ mb: 1 }}>
-              Home
+              {t("home")}
             </Link>
             <Link href="/products" color="inherit" display="block" sx={{ mb: 1 }}>
-              Shop
+              {t("shop")}
             </Link>
             <Link href="/about" color="inherit" display="block" sx={{ mb: 1 }}>
-              About Us
+              {t("about")}
             </Link>
             <Link href="/contact" color="inherit" display="block" sx={{ mb: 1 }}>
-              Contact
+              {t("contact")}
             </Link>
           </Grid>
 
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" gutterBottom>
-              Contact Us
+              {t("contactUs")}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <LocationIcon sx={{ mr: 1 }} fontSize="small" />
@@ -81,7 +88,7 @@ export default function Footer() {
         <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.2)" }} />
 
         <Typography variant="body2" align="center">
-          © {new Date().getFullYear()} Organic Biscuits. All rights reserved.
+          © {new Date().getFullYear()} {t("organicBiscuits")}. {t("allRightsReserved")}
         </Typography>
       </Container>
     </Box>

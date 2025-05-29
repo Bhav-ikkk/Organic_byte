@@ -5,7 +5,10 @@ import { createTheme, ThemeProvider } from "@mui/material/styles"
 import CssBaseline from "@mui/material/CssBaseline"
 import { CartProvider } from "@/contexts/cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { ThemeContextProvider } from "@/contexts/theme-context"
+import ThemeCustomizer from "@/components/theme-customizer"
 import "./globals.css"
+import "@/lib/i18n"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -59,14 +62,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
+       <ThemeContextProvider>
         <AuthProvider>
           <CartProvider>
             <ThemeProvider theme={theme}>
               <CssBaseline />
               {children}
+              <ThemeCustomizer />
             </ThemeProvider>
           </CartProvider>
         </AuthProvider>
+      </ThemeContextProvider>
       </body>
     </html>
   )

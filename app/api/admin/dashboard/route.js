@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
@@ -19,84 +20,92 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 })
     }
 
-    // Mock dashboard data
+    // Get dashboard statistics
+    const [totalSales, totalOrders, totalCustomers, lowStockProducts, recentOrders, topSellingProducts, salesData] =
+      await Promise.all([
+        // Total sales from all orders
+        prisma.order.aggregate({
+          _sum: { totalAmount: true },
+          where: { status: { not: "cancelled" } },
+        }),
+
+        // Total orders count
+        prisma.order.count(),
+
+        // Total customers count
+        prisma.user.count({ where: { isAdmin: false } }),
+
+        // Low stock products (less than 10)
+        prisma.product.count({ where: { stock: { lt: 10 } } }),
+
+        // Recent orders with user details
+        prisma.order.findMany({
+          take: 5,
+          orderBy: { placedAt: "desc" },
+          include: {
+            user: { select: { name: true, email: true } },
+            items: { include: { product: { select: { name: true } } } },
+          },
+        }),
+
+        // Top selling products
+        prisma.product.findMany({
+          take: 4,
+          orderBy: { reviewCount: "desc" },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            orderItems: {
+              select: { quantity: true, price: true },
+            },
+          },
+        }),
+
+        // Sales data for the last 7 days
+        prisma.order.groupBy({
+          by: ["placedAt"],
+          _sum: { totalAmount: true },
+          where: {
+            placedAt: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+            status: { not: "cancelled" },
+          },
+          orderBy: { placedAt: "asc" },
+        }),
+      ])
+
+    // Process top selling products
+    const processedTopProducts = topSellingProducts.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sales: product.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+      revenue: product.orderItems.reduce((sum, item) => sum + item.quantity * item.price, 0),
+    }))
+
+    // Process sales data for chart
+    const processedSalesData = salesData.map((item) => ({
+      date: item.placedAt.toISOString().split("T")[0],
+      amount: item._sum.totalAmount || 0,
+    }))
+
     const dashboardData = {
-      totalSales: 12580,
-      totalOrders: 156,
-      totalCustomers: 89,
-      lowStockProducts: 5,
-      recentOrders: [
-        {
-          id: "1001",
-          customer: "John Doe",
-          date: "2023-05-15T10:30:00Z",
-          total: 49.97,
-          status: "delivered",
-        },
-        {
-          id: "1002",
-          customer: "Jane Smith",
-          date: "2023-05-14T14:45:00Z",
-          total: 35.98,
-          status: "shipped",
-        },
-        {
-          id: "1003",
-          customer: "Bob Johnson",
-          date: "2023-05-14T09:15:00Z",
-          total: 29.99,
-          status: "processing",
-        },
-        {
-          id: "1004",
-          customer: "Alice Brown",
-          date: "2023-05-13T16:20:00Z",
-          total: 74.95,
-          status: "delivered",
-        },
-        {
-          id: "1005",
-          customer: "Charlie Wilson",
-          date: "2023-05-13T11:10:00Z",
-          total: 19.99,
-          status: "cancelled",
-        },
-      ],
-      salesData: [
-        { date: "2023-05-09", amount: 1250 },
-        { date: "2023-05-10", amount: 1800 },
-        { date: "2023-05-11", amount: 1600 },
-        { date: "2023-05-12", amount: 2100 },
-        { date: "2023-05-13", amount: 1900 },
-        { date: "2023-05-14", amount: 2300 },
-        { date: "2023-05-15", amount: 2050 },
-      ],
-      topSellingProducts: [
-        {
-          id: "1",
-          name: "Chocolate Chip Biscuits",
-          sales: 245,
-          revenue: 1223.55,
-        },
-        {
-          id: "2",
-          name: "Vanilla Shortbread",
-          sales: 189,
-          revenue: 754.11,
-        },
-        {
-          id: "3",
-          name: "Almond Butter Cookies",
-          sales: 156,
-          revenue: 934.44,
-        },
-        {
-          id: "4",
-          name: "Coconut Macaroons",
-          sales: 134,
-          revenue: 936.66,
-        },
-      ],
+      totalSales: totalSales._sum.totalAmount || 0,
+      totalOrders: totalOrders,
+      totalCustomers: totalCustomers,
+      lowStockProducts: lowStockProducts,
+      recentOrders: recentOrders.map((order) => ({
+        id: order.id,
+        customer: order.user.name,
+        email: order.user.email,
+        date: order.placedAt.toISOString(),
+        total: order.totalAmount,
+        status: order.status,
+        itemCount: order.items.length,
+      })),
+      topSellingProducts: processedTopProducts,
+      salesData: processedSalesData,
     }
 
     return NextResponse.json(dashboardData)

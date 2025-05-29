@@ -5,38 +5,42 @@ import { Box, Container, Typography, Grid, Paper, Avatar, Rating } from "@mui/ma
 import { IconQuote } from "@tabler/icons-react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useTranslation } from "react-i18next"
+import { useTheme } from "@/contexts/theme-context"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
-const testimonials = [
-  {
-    name: "Sarah Johnson",
-    role: "Health Enthusiast",
-    avatar: "/placeholder.svg?height=60&width=60",
-    rating: 5,
-    text: "These biscuits are absolutely divine! The perfect balance of taste and health. I can't imagine my morning tea without them.",
-  },
-  {
-    name: "Michael Chen",
-    role: "Food Blogger",
-    avatar: "/placeholder.svg?height=60&width=60",
-    rating: 5,
-    text: "As someone who reviews food for a living, I can confidently say these are the best organic biscuits I've ever tasted.",
-  },
-  {
-    name: "Emma Williams",
-    role: "Busy Mom",
-    avatar: "/placeholder.svg?height=60&width=60",
-    rating: 5,
-    text: "Finally, a healthy snack my kids actually love! The quality is outstanding and the ingredients give me peace of mind.",
-  },
-]
-
 export default function TestimonialsSection() {
+  const { t } = useTranslation()
+  const { mode } = useTheme()
   const sectionRef = useRef(null)
   const cardsRef = useRef([])
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Health Enthusiast",
+      avatar: "/placeholder.svg?height=60&width=60",
+      rating: 5,
+      text: "These biscuits are absolutely divine! The perfect balance of taste and health. I can't imagine my morning tea without them.",
+    },
+    {
+      name: "Michael Chen",
+      role: "Food Blogger",
+      avatar: "/placeholder.svg?height=60&width=60",
+      rating: 5,
+      text: "As someone who reviews food for a living, I can confidently say these are the best organic biscuits I've ever tasted.",
+    },
+    {
+      name: "Emma Williams",
+      role: "Busy Mom",
+      avatar: "/placeholder.svg?height=60&width=60",
+      rating: 5,
+      text: "Finally, a healthy snack my kids actually love! The quality is outstanding and the ingredients give me peace of mind.",
+    },
+  ]
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -76,7 +80,10 @@ export default function TestimonialsSection() {
       ref={sectionRef}
       sx={{
         py: { xs: 8, md: 12 },
-        background: "linear-gradient(180deg, #ffffff 0%, #fefae0 100%)",
+        background:
+          mode === "light"
+            ? "linear-gradient(180deg, #ffffff 0%, #fefae0 100%)"
+            : "linear-gradient(180deg, #1e1e1e 0%, #2d2d2d 100%)",
       }}
     >
       <Container maxWidth="lg">
@@ -86,14 +93,17 @@ export default function TestimonialsSection() {
             sx={{
               fontWeight: 700,
               mb: 3,
-              background: "linear-gradient(135deg, #2d3748 0%, #4a5568 100%)",
+              background:
+                mode === "light"
+                  ? "linear-gradient(135deg, #2d3748 0%, #4a5568 100%)"
+                  : "linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               fontSize: { xs: "2.5rem", md: "3.5rem" },
             }}
           >
-            What Our Customers Say
+            {t("customerTestimonials")}
           </Typography>
 
           <Typography
@@ -105,7 +115,7 @@ export default function TestimonialsSection() {
               lineHeight: 1.6,
             }}
           >
-            Don't just take our word for it. Here's what our happy customers have to say about our biscuits.
+            {t("testimonialsDesc")}
           </Typography>
         </Box>
 
@@ -118,15 +128,18 @@ export default function TestimonialsSection() {
                 sx={{
                   p: 4,
                   height: "100%",
-                  background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+                  background:
+                    mode === "light"
+                      ? "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)"
+                      : "linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%)",
                   border: "1px solid",
-                  borderColor: "grey.200",
+                  borderColor: mode === "light" ? "grey.200" : "grey.700",
                   borderRadius: 3,
                   position: "relative",
                   transition: "all 0.3s ease",
                   "&:hover": {
                     transform: "translateY(-5px)",
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                    boxShadow: mode === "light" ? "0 20px 40px rgba(0,0,0,0.1)" : "0 20px 40px rgba(0,0,0,0.3)",
                   },
                 }}
               >
