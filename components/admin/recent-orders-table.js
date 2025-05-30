@@ -1,34 +1,44 @@
-"use client"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Box,
+  Typography,
+  Button,
+} from "@mui/material"
+import { Visibility as VisibilityIcon } from "@mui/icons-material"
+import Link from "next/link"
 
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Typography, Box } from "@mui/material"
+export default function RecentOrdersTable({ orders = [] }) {
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: "warning",
+      processing: "info",
+      shipped: "primary",
+      delivered: "success",
+      cancelled: "error",
+    }
+    return colors[status] || "default"
+  }
 
-export default function RecentOrdersTable({ orders }) {
+  // If no orders, show a message
   if (!orders || orders.length === 0) {
     return (
-      <Box sx={{ py: 4, textAlign: "center" }}>
-        <Typography>No recent orders found.</Typography>
+      <Box sx={{ textAlign: "center", py: 4 }}>
+        <Typography variant="body1" color="text.secondary">
+          No recent orders found
+        </Typography>
       </Box>
     )
   }
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "delivered":
-        return "success"
-      case "shipped":
-        return "info"
-      case "processing":
-        return "warning"
-      case "cancelled":
-        return "error"
-      default:
-        return "default"
-    }
-  }
-
   return (
     <TableContainer>
-      <Table>
+      <Table sx={{ minWidth: 650 }} size="small">
         <TableHead>
           <TableRow>
             <TableCell>Order ID</TableCell>
@@ -36,17 +46,51 @@ export default function RecentOrdersTable({ orders }) {
             <TableCell>Date</TableCell>
             <TableCell>Total</TableCell>
             <TableCell>Status</TableCell>
+            <TableCell align="right">Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell>#{order.id}</TableCell>
-              <TableCell>{order.customer}</TableCell>
-              <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-              <TableCell>${order.total.toFixed(2)}</TableCell>
+            <TableRow key={order.id} hover>
               <TableCell>
-                <Chip label={order.status} color={getStatusColor(order.status)} size="small" />
+                <Typography variant="body2" fontWeight="medium">
+                  #{order.id.slice(-6)}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{order.customer}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {order.email}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{new Date(order.date).toLocaleDateString()}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(order.date).toLocaleTimeString()}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2" fontWeight="medium">
+                  ${order.total.toFixed(2)}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Chip
+                  label={order.status}
+                  color={getStatusColor(order.status)}
+                  size="small"
+                  sx={{ textTransform: "capitalize" }}
+                />
+              </TableCell>
+              <TableCell align="right">
+                <Button
+                  component={Link}
+                  href={`/admin/orders?id=${order.id}`}
+                  size="small"
+                  startIcon={<VisibilityIcon fontSize="small" />}
+                >
+                  View
+                </Button>
               </TableCell>
             </TableRow>
           ))}

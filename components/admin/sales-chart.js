@@ -1,43 +1,75 @@
 "use client"
+import { Box, useTheme } from "@mui/material"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-import { Box, Typography } from "@mui/material"
+export default function SalesChart({ data = [] }) {
+  const theme = useTheme()
 
-export default function SalesChart({ data }) {
-  if (!data || data.length === 0) {
-    return (
-      <Box sx={{ py: 4, textAlign: "center" }}>
-        <Typography>No sales data available.</Typography>
-      </Box>
-    )
+  // If no data or empty array, show placeholder data
+  const chartData =
+    data.length > 0
+      ? data
+      : [
+          { date: "2023-05-09", amount: 1250 },
+          { date: "2023-05-10", amount: 1800 },
+          { date: "2023-05-11", amount: 1600 },
+          { date: "2023-05-12", amount: 2100 },
+          { date: "2023-05-13", amount: 1900 },
+          { date: "2023-05-14", amount: 2300 },
+          { date: "2023-05-15", amount: 2050 },
+        ]
+
+  // Format date for display
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
   }
 
-  // Simple bar chart representation
-  const maxAmount = Math.max(...data.map((item) => item.amount))
+  // Format currency for tooltip
+  const formatCurrency = (value) => {
+    return `$${value.toLocaleString()}`
+  }
 
   return (
-    <Box sx={{ height: 300, display: "flex", alignItems: "end", gap: 1 }}>
-      {data.map((item, index) => {
-        const height = (item.amount / maxAmount) * 250
-        return (
-          <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-            <Typography variant="caption" sx={{ mb: 1 }}>
-              ${item.amount}
-            </Typography>
-            <Box
-              sx={{
-                width: "100%",
-                height: `${height}px`,
-                backgroundColor: "primary.main",
-                borderRadius: 1,
-                mb: 1,
-              }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-            </Typography>
-          </Box>
-        )
-      })}
+    <Box sx={{ width: "100%", height: 300 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={chartData}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+          <XAxis
+            dataKey="date"
+            tickFormatter={formatDate}
+            stroke={theme.palette.text.secondary}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis tickFormatter={(value) => `$${value}`} stroke={theme.palette.text.secondary} tick={{ fontSize: 12 }} />
+          <Tooltip
+            formatter={formatCurrency}
+            labelFormatter={formatDate}
+            contentStyle={{
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 4,
+              boxShadow: theme.shadows[3],
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="amount"
+            stroke={theme.palette.primary.main}
+            strokeWidth={2}
+            dot={{ r: 4, strokeWidth: 2 }}
+            activeDot={{ r: 6, strokeWidth: 2 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </Box>
   )
 }

@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Typography, Grid, Paper, Card, CardContent, CircularProgress, Alert } from "@mui/material"
+import { Box, Typography, Grid, Paper, Card, CardContent, CircularProgress, Alert, Button } from "@mui/material"
 import {
   ShoppingCart as ShoppingCartIcon,
   Inventory as InventoryIcon,
   Person as PersonIcon,
   AttachMoney as AttachMoneyIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material"
 import AdminHeader from "@/components/admin/admin-header"
 import RecentOrdersTable from "@/components/admin/recent-orders-table"
@@ -18,38 +19,36 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch("/api/admin/dashboard")
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data")
-        }
-        const data = await response.json()
-        setStats(data)
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err)
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
+      const response = await fetch("/api/admin/dashboard")
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to fetch dashboard data")
+      }
+
+      const data = await response.json()
+      setStats(data)
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err)
+      setError(err.message || "An error occurred while fetching dashboard data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchDashboardData()
   }, [])
 
-  if (loading) {
+  if (loading && !stats) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">{error}. Please try again later.</Alert>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <CircularProgress size={60} thickness={4} />
       </Box>
     )
   }
@@ -69,10 +68,24 @@ export default function AdminDashboard() {
     <Box>
       <AdminHeader title="Dashboard" />
 
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 3 }}
+          action={
+            <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={fetchDashboardData}>
+              Retry
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
         {/* Stats Cards */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Box
@@ -81,6 +94,9 @@ export default function AdminDashboard() {
                     borderRadius: "50%",
                     p: 1.5,
                     mr: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   <AttachMoneyIcon color="primary" />
@@ -97,7 +113,7 @@ export default function AdminDashboard() {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Box
@@ -106,6 +122,9 @@ export default function AdminDashboard() {
                     borderRadius: "50%",
                     p: 1.5,
                     mr: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   <ShoppingCartIcon color="success" />
@@ -122,7 +141,7 @@ export default function AdminDashboard() {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Box
@@ -131,6 +150,9 @@ export default function AdminDashboard() {
                     borderRadius: "50%",
                     p: 1.5,
                     mr: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   <PersonIcon color="info" />
@@ -147,7 +169,7 @@ export default function AdminDashboard() {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Box
@@ -156,6 +178,9 @@ export default function AdminDashboard() {
                     borderRadius: "50%",
                     p: 1.5,
                     mr: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   <InventoryIcon color="warning" />
@@ -173,8 +198,8 @@ export default function AdminDashboard() {
 
         {/* Sales Chart */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom fontWeight="500">
               Sales Overview
             </Typography>
             <SalesChart data={dashboardStats.salesData} />
@@ -183,8 +208,8 @@ export default function AdminDashboard() {
 
         {/* Top Selling Products */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: "100%" }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom fontWeight="500">
               Top Selling Products
             </Typography>
             <TopSellingProducts products={dashboardStats.topSellingProducts} />
@@ -193,8 +218,8 @@ export default function AdminDashboard() {
 
         {/* Recent Orders */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom fontWeight="500">
               Recent Orders
             </Typography>
             <RecentOrdersTable orders={dashboardStats.recentOrders} />
